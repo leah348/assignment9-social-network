@@ -15,7 +15,7 @@ export default function OnboardingPage() {
       `INSERT INTO user_account(username,bio,clerk_id) VALUES ($1, $2, $3)`,
       [username, bio, userId],
     );
-    redirect(`/users${userId}`);
+    redirect(`/users/${userId}`);
   }
 
   return (
@@ -44,7 +44,7 @@ export default function OnboardingPage() {
           </div>
           <button
             type="submit"
-            className="mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            className="mt-4 p-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Submit
           </button>

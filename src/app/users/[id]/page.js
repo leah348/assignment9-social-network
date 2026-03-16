@@ -65,12 +65,15 @@ import { getUser } from "@/utils/getUser";
 import { db } from "@/utils/connect";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export default async function UserPage() {
   const clerkUser = await currentUser();
+  const { userId } = await auth();
   const user = await getUser();
 
-  const currenBio = user[0]?.bio;
+  const currentBio = user[0]?.bio;
 
   async function updateBio(formData) {
     "use server";
@@ -78,10 +81,12 @@ export default async function UserPage() {
     const { userId } = await auth();
     const bio = formData.get("bio");
 
-    await db.query("UPDATE users SET bio = $1 WHERE clerk_id = $2", [
+    await db.query("UPDATE user_account SET bio = $1 WHERE clerk_id = $2", [
       bio,
       userId,
     ]);
+    revalidatePath("/users"); // refresh profile data
+    redirect("/users"); // redirect back to profile
   }
 
   return (
@@ -89,53 +94,66 @@ export default async function UserPage() {
       <div
         style={{ maxWidth: "600px", margin: "40px auto", lineHeight: "1.6" }}
       >
-        <h1 className=" text-3xl text-center "> This is the user page</h1>
+        <h1 className="text-3xl text-center">This is the user page</h1>
+
         <h2>Your Profile</h2>
-        <h2>
+
+        {/* <h2>
           {clerkUser?.firstName
             ? clerkUser.firstName.charAt(0).toUpperCase() +
               clerkUser.firstName.slice(1)
             : ""}
           's Profile
-        </h2>
+        </h2> */}
+        {/* <h3>{clerkUser?.firstName}'s Profile</h3> */}
+        <h3>{clerkUser?.firstName || user[0]?.username || "User"}'s Profile</h3>
+
         <p>
-          <strong>Name: </strong>{" "}
-          {clerkUser?.firstName
+          <strong>Name:</strong> {user[0]?.username}
+          {/* {clerkUser?.firstName
             ? clerkUser.firstName.charAt(0).toUpperCase() +
               clerkUser.firstName.slice(1)
-            : ""}
+            : ""} */}
         </p>
-        {/* <p>
-        
-        
-      
-          <strong>Name:</strong>
-          <span style={{ marginLeft: "6px" }}>{clerkUser?.firstName}</span>
-        </p> */}
-        <p></p>
+
+        <p>
+          <strong>Last Name:</strong> {user[0]?.surname}
+          {/* {clerkUser?.surName
+            ? clerkUser.surName.charAt(0).toUpperCase() +
+              clerkUser.surName.slice(1)
+            : ""} */}
+        </p>
+
         <p>
           <strong>Bio:</strong>
         </p>
-        <p>{user[0]?.bio || "No bio yet.  Add one below!"}</p>
-        <form action={"/updateBio"}>
-          <textarea
-            name="bio"
-            defaultValue={currenBio}
-            placeholder="Write something about yourself or your love for books..."
-            style={{ width: "100%" }}
-          />
-          <div
-            className="flex
-           gap-4 text"
-          >
-            {/* <Link href="/edit-profile" className="bg-blue-500 m-1 p-2">
-              Edit Profile
-            </Link> */}
-            <button type="submit" className="bg-blue-500 p-2 m-1">
+
+        <p className="bg-emerald-100 p-2">
+          {currentBio || "No bio yet. Add one below!"}
+        </p>
+
+        {!currentBio && (
+          <form action={updateBio}>
+            <textarea
+              name="bio"
+              placeholder="Write something about yourself or your love for books..."
+              style={{ width: "100%" }}
+            />
+
+            <button type="submit" className="bg-blue-500 text-white p-2 mt-2">
               Save Bio
             </button>
-          </div>
-        </form>
+          </form>
+        )}
+        {/* Edit Profile Button */}
+        {userId && (
+          <Link
+            href={`/users/edit`}
+            className="bg-blue-500 text-white p-2 mt-4 inline-block"
+          >
+            Edit Profile
+          </Link>
+        )}
       </div>
     </div>
   );
