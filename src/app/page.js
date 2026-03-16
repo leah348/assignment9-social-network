@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default async function Home() {
-  const userDetails = await getUser();
+  // const userDetails = await getUser();
   return (
     <div>
       <h1 className="">Welcome to Our Book World</h1>
